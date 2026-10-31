@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Brightloop Billing</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#1c2b2d;--mut:#6b7c7f;--paper:#f4f7f6;--card:#fff;--pine:#12514a;--mint:#d9ece6;--sun:#f0a63a;--berry:#c8452f;--line:#dfe7e5;color-scheme:light}
+@media(prefers-color-scheme:dark){:root{--ink:#e8f0ee;--mut:#9fb2b0;--paper:#0f1a1b;--card:#16262a;--pine:#5cc2b0;--mint:#1d3a38;--berry:#ef7a65;--line:#25393b;color-scheme:dark}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.5 "Bricolage Grotesque",system-ui,sans-serif}
+h1,h2,h3{margin:0 0 .4em;line-height:1.2}h1{font-size:2rem;font-weight:800}h2{font-size:1.25rem}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer;border:0;border-radius:10px;padding:.5em 1em;background:var(--pine);color:var(--paper);font-weight:600}
+button.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+button.sm{padding:.25em .7em;font-size:.85rem;margin:2px 2px 2px 0}
+button.warn{background:var(--berry);color:#fff}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid var(--sun);outline-offset:1px}
+input,select,textarea{width:100%;padding:.55em .7em;border:1px solid var(--line);border-radius:10px;background:var(--card)}
+label{display:block;margin:.7em 0 0;font-size:.9rem;color:var(--mut)}
+.shell{display:grid;grid-template-columns:230px 1fr;min-height:100vh}
+aside{background:var(--pine);color:#fff;padding:22px 16px;display:flex;flex-direction:column;gap:18px}
+.logo{font-weight:800;font-size:1.3rem;display:flex;align-items:center;gap:8px}
+.logo i{width:22px;height:22px;border-radius:50% 50% 50% 4px;background:var(--sun);display:inline-block}
+aside nav{display:flex;flex-direction:column;gap:2px}
+aside nav a{color:#e5f3ef;padding:.5em .8em;border-radius:10px;cursor:pointer;text-decoration:none}
+aside nav a.on,aside nav a:hover{background:rgba(255,255,255,.14);color:#fff}
+.me{margin-top:auto;font-weight:600}.me small{display:block;opacity:.7;font-weight:400;margin-bottom:8px}
+.me button{background:rgba(255,255,255,.15);color:#fff;border:0}
+main{padding:28px clamp(16px,4vw,44px);min-width:0}
+.top{display:flex;justify-content:space-between;align-items:end;gap:12px;flex-wrap:wrap;margin-bottom:18px}
+.top p{margin:0;color:var(--mut)}
+.stats{display:grid;grid-template-columns:2fr 1fr 1fr;gap:14px;margin-bottom:20px}
+.stat{background:var(--card);border-radius:18px;padding:18px 20px;border:1px solid var(--line)}
+.stat.big{background:var(--pine);color:var(--paper);border:0}
+.stat b{font-size:1.9rem;display:block;font-weight:800}.stat span{color:var(--mut)}.stat.big span{color:var(--mint)}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin-bottom:18px}
+.tw{overflow-x:auto}table{width:100%;border-collapse:collapse}
+th{text-align:left;font-weight:600;color:var(--mut);font-size:.85rem;padding:8px 10px;border-bottom:1px solid var(--line)}
+td{padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+tr:last-child td{border:0}
+.chip{display:inline-block;padding:.1em .7em;border-radius:99px;font-size:.8rem;background:var(--mint);color:var(--pine);font-weight:600}
+.chip.draft,.chip.cancelled,.chip.closed,.chip.paused{background:var(--line);color:var(--mut)}
+.chip.confirmed,.chip.quotation{background:#fbe8c6;color:#8a5a00}
+.chip.overdue{background:#f6d4cc;color:var(--berry)}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:end;margin-bottom:12px}.row>*{flex:1;min-width:130px}.row>button{flex:0}
+.empty{color:var(--mut);padding:14px 0}
+.ov{position:fixed;inset:0;background:rgba(10,20,20,.55);display:grid;place-items:center;padding:16px;z-index:9}
+.modal{background:var(--card);border-radius:18px;padding:22px;width:min(480px,100%);max-height:90vh;overflow:auto}
+.err{color:var(--berry);min-height:1.3em;margin-top:8px;font-size:.9rem}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--paper);padding:.6em 1.2em;border-radius:99px;z-index:20}
+.auth{display:grid;grid-template-columns:1.1fr 1fr;min-height:100vh}
+.hero{background:var(--pine);color:#fff;padding:clamp(24px,6vw,64px);display:flex;flex-direction:column;justify-content:center;gap:14px}
+.hero p{max-width:34ch;color:var(--mint);font-size:1.1rem}
+.box{padding:clamp(24px,6vw,64px);display:flex;flex-direction:column;justify-content:center;max-width:460px}
+.tabs{display:flex;gap:6px;margin-bottom:12px}.tabs button{background:transparent;color:var(--mut);border:1px solid var(--line)}.tabs button.on{background:var(--mint);color:var(--pine);border-color:transparent}
+.inbox{background:var(--mint);border-radius:12px;padding:12px;margin-top:12px}
+.rp .rph{background:linear-gradient(135deg,#0d3b3a,#1e7a6c);color:#fff;margin:-22px -22px 16px;padding:20px 22px;border-radius:18px 18px 0 0}
+.rp .amt{font-size:2rem;font-weight:800}.rp small{opacity:.8}
+.rp .ok{text-align:center;padding:12px 0}.rp .ok i{display:grid;place-items:center;width:56px;height:56px;border-radius:50%;background:var(--pine);color:var(--paper);font-size:1.8rem;margin:0 auto 10px;font-style:normal}
+.spin{width:34px;height:34px;border:4px solid var(--line);border-top-color:var(--pine);border-radius:50%;animation:s 0.8s linear infinite;margin:24px auto}
+@keyframes s{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.spin{animation-duration:3s}}
+@media(max-width:760px){.shell,.auth{grid-template-columns:1fr}.stats{grid-template-columns:1fr}aside{flex-direction:row;flex-wrap:wrap;align-items:center}aside nav{flex-direction:row;flex-wrap:wrap}.me{margin:0}}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+/* Brightloop Billing: single-file demo app. Data lives in this browser (localStorage). */
+const KEY="brightloop_v1",$=s=>document.querySelector(s),v=id=>$("#"+id).value;
+const today=()=>new Date().toISOString().slice(0,10);
+const addD=(d,n)=>{const x=new Date(d);x.setDate(x.getDate()+n);return x.toISOString().slice(0,10)};
+const addP=(d,p)=>{const x=new Date(d);p=="daily"?x.setDate(x.getDate()+1):p=="weekly"?x.setDate(x.getDate()+7):p=="monthly"?x.setMonth(x.getMonth()+1):x.setFullYear(x.getFullYear()+1);return x.toISOString().slice(0,10)};
+const money=n=>"₹"+Number(n).toLocaleString("en-IN",{minimumFractionDigits:2,maximumFractionDigits:2});
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const MPP={daily:365/12,weekly:52/12,monthly:1,yearly:1/12};
+let S,me=sessionStorage.getItem("bl_me"),route="dash",F={tab:"in"},fails=0,lockUntil=0;
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
+const uid=n=>S.seq[n]=(S.seq[n]||0)+1,pad=(p,n)=>p+String(n).padStart(4,"0");
+async function hash(s){try{const b=await crypto.subtle.digest("SHA-256",new TextEncoder().encode("bl:"+s));return[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,"0")).join("")}catch(e){return btoa("bl:"+s)}}
+const user=()=>S.users.find(u=>u.email==me),uname=e=>(S.users.find(u=>u.email==e)||{}).name||e;
+const P=id=>S.plans.find(x=>x.id==id),I=id=>S.invoices.find(x=>x.id==id),T=id=>(S.taxes.find(x=>x.id==id)||{rate:0}).rate;
+const pwErr=p=>p.length<9?"Use more than eight characters.":!/[A-Z]/.test(p)?"Add an uppercase letter.":!/[a-z]/.test(p)?"Add a lowercase letter.":!/[^A-Za-z0-9]/.test(p)?"Add a special character, like ! or @.":"";
+
+async function init(){
+  try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){}
+  if(!S){
+    S={seq:{},users:[],products:[],plans:[],taxes:[],discounts:[],templates:[],subs:[],invoices:[],payments:[],resets:{}};
+    for(const[n,e,p,r]of[["Meera Nair","admin@brightloop.com","Admin@1234!","admin"],["Arjun Das","staff@brightloop.com","Staff@1234!","staff"],["Kavya Shops","customer@demo.com","Customer@123!","customer"]])S.users.push({name:n,email:e,pw:await hash(p),role:r});
+    S.taxes=[{id:1,name:"GST 18%",rate:18},{id:2,name:"GST 5%",rate:5}];
+    S.products=[{id:1,name:"Brightloop CRM seat",type:"Software",price:1200,cost:400,notes:"Per user, per period",taxId:1,variants:[{attr:"Brand",val:"Odoo",extra:560},{attr:"Brand",val:"Standard",extra:0}]},{id:2,name:"Priority support add-on",type:"Add-on",price:300,cost:90,notes:"",taxId:1,variants:[]}];
+    S.plans=[{id:1,name:"Starter monthly",period:"monthly",price:499,minQty:1,from:"2026-01-01",to:"2027-12-31",autoClose:true,earlyClose:true,pausable:true,renewable:true,taxId:1},{id:2,name:"Business yearly",period:"yearly",price:9999,minQty:5,from:"2026-01-01",to:"2027-12-31",autoClose:false,earlyClose:false,pausable:false,renewable:true,taxId:1}];
+    S.discounts=[{id:1,name:"Seat saver 10%",kind:"percent",value:10,minAmt:0,minQty:5,from:"2026-01-01",to:"2027-12-31",limit:50,used:0,scope:"all",pids:[]}];
+    S.templates=[{id:1,name:"Business starter pack",planId:2,days:15,lines:[{pid:1,vi:0,qty:5},{pid:2,vi:-1,qty:5}]}];
+    save();
+  }
+  render();
+}
+
+/* ---------- money logic ---------- */
+const prod=id=>S.products.find(x=>x.id==id);
+const unit=l=>{const p=prod(l.pid);return p.price+(l.vi>=0&&p.variants[l.vi]?p.variants[l.vi].extra:0)};
+const lname=l=>{const p=prod(l.pid);return p.name+(l.vi>=0&&p.variants[l.vi]?" ("+p.variants[l.vi].val+")":"")};
+function build(sub){
+  const plan=P(sub.planId),L=[{name:"Plan: "+plan.name,qty:1,price:plan.price,taxId:plan.taxId,pid:0}];
+  sub.lines.forEach(l=>L.push({name:lname(l),qty:l.qty,price:unit(l),taxId:prod(l.pid).taxId,pid:l.pid}));
+  L.forEach(l=>l.amt=l.qty*l.price);
+  const sub0=L.reduce((a,l)=>a+l.amt,0),t=today();let best=null,bd=0;
+  S.discounts.forEach(d=>{
+    if(t<d.from||t>d.to||d.used>=d.limit)return;
+    const el=L.filter(l=>d.scope=="all"||d.pids.includes(l.pid));
+    const ea=el.reduce((a,l)=>a+l.amt,0),eq=el.reduce((a,l)=>a+l.qty,0);
+    if(!el.length||ea<d.minAmt||eq<d.minQty)return;
+    const amt=d.kind=="percent"?ea*d.value/100:Math.min(d.value,ea);
+    if(amt>bd){bd=amt;best={d,el,ea}}
+  });
+  let tax=0;
+  L.forEach(l=>{const share=best&&best.el.includes(l)?bd*l.amt/best.ea:0;tax+=(l.amt-share)*T(l.taxId)/100});
+  const r=n=>Math.round(n*100)/100;
+  return{lines:L,sub:r(sub0),disc:r(bd),discId:best?best.d.id:0,discName:best?best.d.name:"",tax:r(tax),total:r(sub0-bd+tax)};
+}
+const paidOf=i=>S.payments.filter(p=>p.invId==i.id).reduce((a,p)=>a+p.amt,0);
+const bal=i=>Math.max(0,Math.round((i.total-paidOf(i))*100)/100);
+const isOver=i=>i.status=="Confirmed"&&i.due<today();
+function runBilling(asOf){
+  let made=0;
+  S.subs.forEach(s=>{
+    const plan=P(s.planId);
+    if(s.status=="Active"&&plan.autoClose&&s.end<asOf){s.status="Closed";return}
+    while(s.status=="Active"&&s.nextInv<=asOf&&s.nextInv<=s.end){
+      const key=s.id+":"+s.nextInv;
+      if(!S.invoices.some(i=>i.key==key)){
+        const b=build(s);
+        S.invoices.push({id:uid("inv"),no:"",key,subId:s.id,cust:s.cust,date:s.nextInv,due:addD(s.nextInv,s.terms),status:"Draft",sent:false,...b});
+        const inv=S.invoices[S.invoices.length-1];inv.no=pad("INV-",inv.id);
+        if(b.discId)S.discounts.find(d=>d.id==b.discId).used++;
+        made++;
+      }
+      s.nextInv=addP(s.nextInv,plan.period);
+    }
+  });
+  save();return made;
+}
+function recordPay(invId,method,amt,note,ref){
+  const i=I(invId);S.payments.push({id:uid("pay"),invId,method,amt:Math.round(amt*100)/100,date:today(),note:note||"",ref:ref||""});
+  if(bal(i)<=0)i.status="Paid";save();
+}
+
+/* ---------- ui helpers ---------- */
+function toast(m){const t=document.createElement("div");t.className="toast";t.textContent=m;document.body.appendChild(t);setTimeout(()=>t.remove(),2600)}
+let M={};
+function modal(h){close();const o=document.createElement("div");o.className="ov";o.id="ov";o.innerHTML='<div class="modal" role="dialog" aria-modal="true">'+h+"</div>";document.body.appendChild(o);const f=o.querySelector("input,select");if(f)f.focus()}
+function close(){const o=$("#ov");if(o)o.remove()}
+function form(title,fields,cb,btn){
+  M.cb=cb;M.f=fields;
+  modal("<h2>"+title+"</h2>"+fields.map(f=>"<label>"+f.l+(f.t=="select"?'<select id="f_'+f.id+'">'+f.o.map(o=>'<option value="'+esc(o[0])+'"'+(String(o[0])==String(f.v)?" selected":"")+">"+esc(o[1])+"</option>").join("")+"</select>":f.t=="area"?'<textarea id="f_'+f.id+'" rows="3" placeholder="'+esc(f.ph||"")+'">'+esc(f.v||"")+"</textarea>":'<input id="f_'+f.id+'" type="'+(f.t||"text")+'" value="'+esc(f.v??"")+'" placeholder="'+esc(f.ph||"")+'">')+"</label>").join("")+'<div class="err" id="ferr"></div><div class="row" style="margin-top:8px"><button class="ghost" onclick="close()">Cancel</button><button onclick="A.sub()">'+(btn||"Save")+"</button></div>");
+}
+const A={};
+A.sub=()=>{const o={};M.f.forEach(f=>{let x=v("f_"+f.id);o[f.id]=f.t=="number"?Number(x):x});const e=M.cb(o);if(e){$("#ferr").textContent=e;return}close();render()};
+const chip=s=>'<span class="chip '+s.toLowerCase()+'">'+s+"</span>";
+const go=r=>{route=r;render()};
+const NAV={admin:[["dash","Overview"],["subs","Subscriptions"],["inv","Invoices"],["pay","Payments"],["cat","Products and plans"],["rules","Taxes, discounts, templates"],["team","Team"]],staff:[["dash","Overview"],["subs","Subscriptions"],["inv","Invoices"],["pay","Payments"]],customer:[["subs","My subscriptions"],["inv","My invoices"],["pay","My payments"]]};
+const table=(h,rows,empty)=>rows.length?'<div class="tw"><table><thead><tr>'+h.map(x=>"<th>"+x+"</th>").join("")+"</tr></thead><tbody>"+rows.map(r=>"<tr>"+r.map(c=>"<td>"+c+"</td>").join("")+"</tr>").join("")+"</tbody></table></div>":'<div class="empty">'+empty+"</div>";
+
+function render(){
+  const app=$("#app");
+  if(!S)return;
+  if(!me||!user()){app.innerHTML=authView();return}
+  const u=user();if(!NAV[u.role].some(n=>n[0]==route))route=NAV[u.role][0][0];
+  app.innerHTML='<div class="shell"><aside><div class="logo"><i></i>Brightloop</div><nav>'+NAV[u.role].map(n=>'<a tabindex="0" class="'+(n[0]==route?"on":"")+'" onclick="go(\''+n[0]+'\')" onkeydown="if(event.key==\'Enter\')go(\''+n[0]+'\')">'+n[1]+"</a>").join("")+'</nav><div class="me">'+esc(u.name)+"<small>"+u.role+'</small><button onclick="A.out()">Sign out</button></div></aside><main>'+VIEWS[route](u)+"</main></div>";
+}
+
+/* ---------- auth ---------- */
+function authView(){
+  const t=F.tab;
+  const body=t=="in"?'<label>Email<input id="e" type="email" autocomplete="username"></label><label>Password<input id="p" type="password" autocomplete="current-password"></label><div class="err" id="err"></div><button onclick="A.in()">Sign in</button><p><a href="#" onclick="F.tab=\'forgot\';render();return false">Forgot your password?</a></p><p style="color:var(--mut);font-size:.85rem">Try admin@brightloop.com / Admin@1234!, staff@brightloop.com / Staff@1234!, or customer@demo.com / Customer@123!</p>'
+  :t=="up"?'<label>Your name<input id="n"></label><label>Work email<input id="e" type="email"></label><label>Password<input id="p" type="password" autocomplete="new-password"></label><small style="color:var(--mut)">More than 8 characters, with upper and lower case and a special character.</small><div class="err" id="err"></div><button onclick="A.up()">Create account</button>'
+  :t=="forgot"?'<label>Registered email<input id="e" type="email"></label><div class="err" id="err"></div><button onclick="A.forgot()">Send reset link</button>'+(F.inbox?'<div class="inbox"><b>Demo inbox</b><br>A reset link was sent to '+esc(F.inbox.email)+'.<br><button class="sm" onclick="F.tab=\'reset\';render()">Open reset link</button></div>':"")
+  :'<label>New password<input id="p" type="password"></label><div class="err" id="err"></div><button onclick="A.reset()">Save new password</button>';
+  return '<div class="auth"><div class="hero"><div class="logo"><i></i>Brightloop</div><h1>Billing that runs itself, so your month doesn’t.</h1><p>Plans, renewals, invoices and payments in one calm place.</p></div><div class="box"><div class="tabs"><button class="'+(t=="in"?"on":"")+'" onclick="F.tab=\'in\';render()">Sign in</button><button class="'+(t=="up"?"on":"")+'" onclick="F.tab=\'up\';render()">Create account</button></div>'+body+"</div></div>";
+}
+const err=m=>{$("#err").textContent=m};
+A.in=async()=>{
+  if(Date.now()<lockUntil)return err("Too many tries. Wait a few seconds and try again.");
+  const e=v("e").trim().toLowerCase(),h=await hash(v("p")),u=S.users.find(x=>x.email==e&&x.pw==h);
+  if(!u){if(++fails>=5){lockUntil=Date.now()+30000;fails=0}return err("That email and password don’t match.")}
+  fails=0;me=e;sessionStorage.setItem("bl_me",e);route="dash";render();
+};
+A.up=async()=>{
+  const n=v("n").trim(),e=v("e").trim().toLowerCase(),p=v("p");
+  if(!n||!/^\S+@\S+\.\S+$/.test(e))return err("Enter your name and a valid email.");
+  const pe=pwErr(p);if(pe)return err(pe);
+  if(S.users.some(u=>u.email==e))return err("That email already has an account. Try signing in.");
+  S.users.push({name:n,email:e,pw:await hash(p),role:"customer"});save();me=e;sessionStorage.setItem("bl_me",e);route="subs";render();
+};
+A.forgot=()=>{
+  const e=v("e").trim().toLowerCase();if(!S.users.some(u=>u.email==e))return err("We couldn’t find that email.");
+  const tk=[...crypto.getRandomValues(new Uint8Array(12))].map(x=>x.toString(16).padStart(2,"0")).join("");
+  S.resets[tk]={email:e,exp:Date.now()+9e5};save();F.inbox={email:e,tk};render();
+};
+A.reset=async()=>{
+  const p=v("p"),pe=pwErr(p);if(pe)return err(pe);
+  const r=S.resets[F.inbox.tk];if(!r||r.exp<Date.now())return err("This link has expired. Ask for a new one.");
+  S.users.find(u=>u.email==r.email).pw=await hash(p);delete S.resets[F.inbox.tk];save();F.inbox=null;F.tab="in";render();toast("Password updated. Sign in with it.");
+};
+A.out=()=>{me=null;sessionStorage.removeItem("bl_me");F.tab="in";render()};
+
+/* ---------- views ---------- */
+const VIEWS={
+dash(u){
+  const f=F.from||"0000",t=F.to||"9999";
+  const pays=S.payments.filter(p=>p.date>=f&&p.date<=t),rev=pays.reduce((a,p)=>a+p.amt,0);
+  const active=S.subs.filter(s=>s.status=="Active"),mrr=active.reduce((a,s)=>a+build(s).total*MPP[P(s.planId).period],0);
+  const open=S.invoices.filter(i=>i.status=="Confirmed"),owed=open.reduce((a,i)=>a+bal(i),0),over=open.filter(isOver);
+  const h=new Date().getHours(),g=h<12?"Good morning":h<18?"Good afternoon":"Good evening";
+  return '<div class="top"><div><h1>'+g+", "+esc(u.name.split(" ")[0])+'.</h1><p>'+(over.length?over.length+" invoice"+(over.length>1?"s are":" is")+" overdue and worth a nudge today.":"Nothing is overdue. Nice.")+'</p></div><div class="row"><label>From<input type="date" value="'+(F.from||"")+'" onchange="F.from=this.value;render()"></label><label>To<input type="date" value="'+(F.to||"")+'" onchange="F.to=this.value;render()"></label></div></div>'
+  +'<div class="stats"><div class="stat big"><b>'+money(mrr)+"</b><span>Monthly recurring revenue from "+active.length+" active subscription"+(active.length==1?"":"s")+"</span></div><div class=\"stat\"><b>"+money(rev)+"</b><span>Collected</span></div><div class=\"stat\"><b>"+money(owed)+"</b><span>Still owed</span></div></div>"
+  +'<div class="panel"><h2>Overdue invoices</h2>'+table(["Invoice","Customer","Due","Days late","Balance"],over.map(i=>[i.no,esc(uname(i.cust)),i.due,Math.round((new Date(today())-new Date(i.due))/864e5),money(bal(i))]),"All caught up.")+"</div>"
+  +'<div class="panel"><h2>Latest payments</h2>'+table(["Date","Invoice","Method","Amount"],pays.slice(-6).reverse().map(p=>[p.date,esc(I(p.invId).no),esc(p.method),money(p.amt)]),"No payments in this range yet.")+"</div>";
+},
+subs(u){
+  const cu=u.role=="customer",st=F.sst||"",q=(F.sq||"").toLowerCase();
+  let list=S.subs.filter(s=>(!cu||s.cust==u.email)&&(!st||s.status==st)&&(!q||(s.no+uname(s.cust)).toLowerCase().includes(q)));
+  const rows=list.slice(-100).reverse().map(s=>{const b=build(s),pl=P(s.planId);return[esc(s.no),esc(uname(s.cust)),esc(pl.name)+"<br><small>"+pl.period+"</small>",s.start+" to "+s.end,chip(s.status),money(b.total)+'<details><summary>Lines</summary>'+b.lines.map(l=>esc(l.name)+" × "+l.qty).join("<br>")+"</details>",subActs(s,u,pl)]});
+  return '<div class="top"><div><h1>'+(cu?"Your subscriptions":"Subscriptions")+"</h1><p>Every subscription and where it stands.</p></div><div>"+(cu?'<button onclick="A.mySub()">Choose a plan</button>':'<button onclick="A.newSub()">New subscription</button> ')+(!cu?'<button class="ghost" onclick="A.bill()">Run billing</button>':"")+'</div></div><div class="row"><label>Search<input value="'+esc(F.sq||"")+'" oninput="F.sq=this.value;clearTimeout(F.t);F.t=setTimeout(()=>{render();$(\'input[oninput]\').focus()},300)"></label><label>Status<select onchange="F.sst=this.value;render()">'+["","Draft","Quotation","Confirmed","Active","Paused","Closed"].map(x=>"<option"+(x==st?" selected":"")+' value="'+x+'">'+(x||"All")+"</option>").join("")+"</select></label></div><div class=\"panel\">"+table(["No.","Customer","Plan","Dates","Status","Per period",""],rows,"No subscriptions yet.")+"</div>";
+},
+inv(u){
+  const cu=u.role=="customer",st=F.ist||"";
+  const list=S.invoices.filter(i=>(!cu||i.cust==u.email)&&(!st||(st=="Overdue"?isOver(i):i.status==st)));
+  const rows=list.slice(-100).reverse().map(i=>[esc(i.no),esc(uname(i.cust)),i.date+"<br><small>due "+i.due+"</small>",(isOver(i)?chip("Overdue")+" ":"")+chip(i.status),money(i.total)+(i.disc?"<br><small>incl. "+esc(i.discName)+" −"+money(i.disc)+"</small>":""),money(bal(i)),invActs(i,u)]);
+  return '<div class="top"><div><h1>'+(cu?"Your invoices":"Invoices")+"</h1><p>Created from subscriptions, never typed by hand.</p></div>"+(cu?"":'<button onclick="A.bill()">Run billing</button>')+'</div><div class="row"><label>Show<select onchange="F.ist=this.value;render()">'+["","Draft","Confirmed","Paid","Overdue","Cancelled"].map(x=>"<option"+(x==st?" selected":"")+' value="'+x+'">'+(x||"All")+"</option>").join("")+'</select></label></div><div class="panel">'+table(["No.","Customer","Dates","Status","Total","Balance",""],rows,"No invoices yet. Activate a subscription and run billing.")+"</div>";
+},
+pay(u){
+  const cu=u.role=="customer";
+  const list=S.payments.filter(p=>!cu||I(p.invId).cust==u.email);
+  return '<div class="top"><div><h1>Payments</h1><p>Every payment, matched to its invoice.</p></div></div><div class="panel">'+table(["Date","Invoice","Customer","Method","Amount","Reference and note"],list.slice().reverse().slice(0,100).map(p=>[p.date,esc(I(p.invId).no),esc(uname(I(p.invId).cust)),esc(p.method),money(p.amt),esc((p.ref+" "+p.note).trim())]),"No payments recorded yet.")+"</div>";
+},
+cat(u){
+  return '<div class="top"><div><h1>Products and plans</h1><p>What you sell and how it bills.</p></div><div><button onclick="A.addProd()">Add product</button> <button class="ghost" onclick="A.addPlan()">Add plan</button></div></div><div class="panel"><h2>Products</h2>'+table(["Name","Type","Sales","Cost","Variants"],S.products.map(p=>[esc(p.name),esc(p.type),money(p.price),money(p.cost),p.variants.map(x=>esc(x.attr+": "+x.val)+" (+"+x.extra+")").join("<br>")||"None"]),"")+'</div><div class="panel"><h2>Plans</h2>'+table(["Name","Bills","Price","Min qty","Available","Rules"],S.plans.map(p=>[esc(p.name),p.period,money(p.price),p.minQty,p.from+" to "+p.to,[p.autoClose&&"auto-closes",p.earlyClose&&"close early",p.pausable&&"pausable",p.renewable&&"renewable"].filter(Boolean).join(", ")]),"")+"</div>";
+},
+rules(u){
+  return '<div class="top"><div><h1>Taxes, discounts and templates</h1><p>Set once, applied automatically.</p></div><div><button onclick="A.addTax()">Add tax</button> <button class="ghost" onclick="A.addDisc()">Add discount</button> <button class="ghost" onclick="A.addTpl()">Add template</button></div></div><div class="panel"><h2>Taxes</h2>'+table(["Name","Rate"],S.taxes.map(t=>[esc(t.name),t.rate+"%"]),"")+'</div><div class="panel"><h2>Discounts</h2>'+table(["Name","Value","Needs","Valid","Used"],S.discounts.map(d=>[esc(d.name),d.kind=="percent"?d.value+"%":money(d.value),"min "+money(d.minAmt)+", qty "+d.minQty+"<br><small>"+(d.scope=="all"?"whole subscription":"products "+d.pids.join(","))+"</small>",d.from+" to "+d.to,d.used+" / "+d.limit]),"")+'</div><div class="panel"><h2>Quotation templates</h2>'+table(["Name","Plan","Valid for","Lines"],S.templates.map(t=>[esc(t.name),esc(P(t.planId).name),t.days+" days",t.lines.map(l=>esc(lname(l))+" × "+l.qty).join("<br>")]),"")+"</div>";
+},
+team(u){
+  return '<div class="top"><div><h1>Team</h1><p>Only admins can add staff.</p></div><button onclick="A.addStaff()">Add staff member</button></div><div class="panel">'+table(["Name","Email","Role"],S.users.filter(x=>x.role!="customer").map(x=>[esc(x.name),esc(x.email),x.role]),"")+"</div>";
+}};
+
+/* ---------- actions ---------- */
+function subActs(s,u,pl){
+  const cu=u.role=="customer",b=[];
+  const btn=(l,st,c)=>'<button class="sm '+(c||"")+'" onclick="A.setSub('+s.id+',\''+st+'\')">'+l+"</button>";
+  if(s.status=="Draft"&&!cu)b.push(btn("Send as quotation","Quotation"));
+  if(s.status=="Quotation")b.push(btn(cu?"Accept quote":"Confirm","Confirmed"));
+  if(s.status=="Confirmed"&&!cu)b.push(btn("Activate","Active"));
+  if(s.status=="Active"&&pl.pausable)b.push(btn("Pause","Paused","ghost"));
+  if(s.status=="Paused")b.push(btn("Resume","Active"));
+  if((s.status=="Active"||s.status=="Paused")&&pl.earlyClose)b.push(btn("Close early","Closed","warn"));
+  if(s.status=="Closed"&&pl.renewable)b.push(btn("Renew","Renew"));
+  return b.join("");
+}
+A.setSub=(id,st)=>{
+  const s=S.subs.find(x=>x.id==id),u=user(),pl=P(s.planId);
+  if(u.role=="customer"&&s.cust!=u.email)return;
+  if(st=="Renew"){s.status="Active";s.end=addP(s.end,pl.period);s.nextInv=today()>s.nextInv?today():s.nextInv;toast("Renewed until "+s.end)}
+  else{s.status=st;if(st=="Active"&&s.nextInv<s.start)s.nextInv=s.start}
+  save();render();
+};
+function invActs(i,u){
+  const cu=u.role=="customer",b=[];
+  const btn=(l,a,c)=>'<button class="sm '+(c||"")+'" onclick="'+a+'">'+l+"</button>";
+  if(!cu&&i.status=="Draft")b.push(btn("Confirm","A.setInv("+i.id+",'Confirmed')"));
+  if(!cu&&(i.status=="Draft"||i.status=="Confirmed"))b.push(btn("Cancel","A.setInv("+i.id+",'Cancelled')","warn"));
+  if(!cu&&i.status=="Confirmed")b.push(btn(i.sent?"Resend":"Send","A.send("+i.id+")","ghost"));
+  if(i.status=="Confirmed"){b.push(btn("Pay with Resso Pay","rs("+i.id+",'pick','card')"));if(!cu)b.push(btn("Record payment","A.manual("+i.id+")","ghost"))}
+  if(i.status!="Draft"&&i.status!="Cancelled"||!cu)b.push(btn("Print","printInv("+i.id+")","ghost"));
+  return b.join("");
+}
+A.setInv=(id,st)=>{if(user().role=="customer")return;I(id).status=st;save();render()};
+A.send=id=>{if(user().role=="customer")return;const i=I(id);i.sent=true;save();toast("Invoice "+i.no+" emailed to "+i.cust);render()};
+A.bill=()=>form("Run billing",[{id:"d",l:"Bill everything due up to",t:"date",v:today()}],o=>{if(user().role=="customer")return"Not allowed.";const n=runBilling(o.d);toast(n?n+" invoice"+(n>1?"s":"")+" created as drafts":"Nothing was due. No duplicates made.")},"Create invoices");
+A.manual=id=>{const i=I(id);form("Record a payment for "+i.no,[{id:"m",l:"Method",t:"select",o:[["Bank transfer","Bank transfer"],["Cash","Cash"],["Cheque","Cheque"],["Card (offline)","Card (offline)"]]},{id:"a",l:"Amount",t:"number",v:bal(i)},{id:"n",l:"Note",ph:"Reference or remark"}],o=>{if(!(o.a>0)||o.a>bal(i))return"Enter an amount up to "+money(bal(i))+".";recordPay(id,o.m,o.a,o.n)},"Record")};
+function printInv(id){
+  const i=I(id),w=open("","_blank");if(!w){toast("Allow pop-ups to print");return}
+  w.document.write("<title>"+esc(i.no)+'</title><body style="font:15px system-ui;max-width:680px;margin:30px auto"><h2>Brightloop Software</h2><p>Invoice '+esc(i.no)+" · "+i.status+"<br>Billed to "+esc(uname(i.cust))+"<br>Date "+i.date+" · Due "+i.due+'</p><table width="100%" cellpadding="6" border="1" style="border-collapse:collapse"><tr><th align=left>Item<th>Qty<th>Unit<th>Amount</tr>'+i.lines.map(l=>"<tr><td>"+esc(l.name)+"<td align=center>"+l.qty+"<td align=right>"+money(l.price)+"<td align=right>"+money(l.amt)).join("")+'</table><p align="right">Subtotal '+money(i.sub)+(i.disc?"<br>Discount "+esc(i.discName)+" −"+money(i.disc):"")+"<br>Tax "+money(i.tax)+"<br><b>Total "+money(i.total)+"</b><br>Balance "+money(bal(i))+"</p>");
+  w.document.close();w.print();
+}
+const customers=()=>S.users.filter(x=>x.role=="customer").map(x=>[x.email,x.name+" ("+x.email+")"]);
+const planOpts=()=>S.plans.map(p=>[p.id,p.name+" · "+p.period]);
+const combos=()=>S.products.flatMap(p=>p.variants.length?p.variants.map((x,i)=>[p.id+":"+i,p.name+" ("+x.val+")"]):[[p.id+":-1",p.name]]);
+A.newSub=()=>form("New subscription",[{id:"c",l:"Customer",t:"select",o:customers()},{id:"t",l:"Start from a template",t:"select",o:[["0","No template"]].concat(S.templates.map(t=>[t.id,t.name]))},{id:"p",l:"Plan (used when no template)",t:"select",o:planOpts()},{id:"s",l:"Start date",t:"date",v:today()},{id:"e",l:"Expiry date",t:"date",v:addD(today(),365)},{id:"x",l:"Payment terms",t:"select",o:[["0","Due on receipt"],["15","Net 15"],["30","Net 30"]]}],o=>{
+  const tp=S.templates.find(t=>t.id==o.t),plan=P(tp?tp.planId:o.p);
+  if(!o.c)return"Add a customer account first.";if(o.e<=o.s)return"Expiry must be after the start.";
+  if(o.s<plan.from||o.s>plan.to)return"This plan is available "+plan.from+" to "+plan.to+".";
+  const lines=tp?tp.lines.map(l=>({...l})):[];if(lines.some(l=>l.qty<plan.minQty))return"This plan needs a minimum quantity of "+plan.minQty+".";
+  const id=uid("sub");S.subs.push({id,no:pad("SUB-",id),cust:o.c,planId:plan.id,start:o.s,end:o.e,terms:Number(o.x),status:"Draft",lines,nextInv:o.s,quoteUntil:addD(today(),tp?tp.days:15)});save();
+});
+A.mySub=()=>form("Choose a plan",[{id:"p",l:"Plan",t:"select",o:planOpts()},{id:"i",l:"Product",t:"select",o:combos()},{id:"q",l:"Quantity",t:"number",v:1}],o=>{
+  const plan=P(o.p),[pid,vi]=o.i.split(":").map(Number);
+  if(o.q<plan.minQty)return"This plan needs at least "+plan.minQty+".";
+  const id=uid("sub");S.subs.push({id,no:pad("SUB-",id),cust:me,planId:plan.id,start:today(),end:plan.to,terms:15,status:"Quotation",lines:[{pid,vi,qty:o.q}],nextInv:today(),quoteUntil:addD(today(),15)});save();toast("Quote created. Accept it when you’re ready.");
+});
+A.addProd=()=>form("Add product",[{id:"n",l:"Name"},{id:"t",l:"Type",v:"Software"},{id:"p",l:"Sales price",t:"number"},{id:"c",l:"Cost price",t:"number"},{id:"x",l:"Tax",t:"select",o:S.taxes.map(t=>[t.id,t.name])},{id:"v",l:"Variants (one per line: Attribute:Value:Extra price)",t:"area",ph:"Brand:Odoo:560"},{id:"o",l:"Notes",t:"area"}],o=>{
+  if(user().role!="admin")return"Admins only.";if(!o.n||!(o.p>=0))return"Add a name and a sales price.";
+  const variants=o.v.split("\n").map(x=>x.trim()).filter(Boolean).map(x=>{const[a,b,c]=x.split(":");return{attr:a,val:b||"",extra:Number(c)||0}});
+  S.products.push({id:uid("prod"),name:o.n,type:o.t,price:o.p,cost:o.c,notes:o.o,taxId:Number(o.x),variants});save();
+});
+A.addPlan=()=>{const yn=[["1","Yes"],["0","No"]];form("Add plan",[{id:"n",l:"Name"},{id:"b",l:"Bills",t:"select",o:["daily","weekly","monthly","yearly"].map(x=>[x,x])},{id:"p",l:"Price per period",t:"number"},{id:"q",l:"Minimum quantity",t:"number",v:1},{id:"f",l:"Available from",t:"date",v:today()},{id:"t",l:"Available until",t:"date",v:addD(today(),365)},{id:"a",l:"Closes on its own at the end?",t:"select",o:yn},{id:"e",l:"Can be closed early?",t:"select",o:yn},{id:"s",l:"Can be paused?",t:"select",o:yn},{id:"r",l:"Can be renewed?",t:"select",o:yn}],o=>{
+  if(user().role!="admin")return"Admins only.";if(!o.n||!(o.p>=0))return"Add a name and a price.";if(o.t<=o.f)return"The end date must be after the start.";
+  S.plans.push({id:uid("plan"),name:o.n,period:o.b,price:o.p,minQty:o.q||1,from:o.f,to:o.t,autoClose:o.a=="1",earlyClose:o.e=="1",pausable:o.s=="1",renewable:o.r=="1",taxId:S.taxes[0]?S.taxes[0].id:0});save();
+})};
+A.addTax=()=>form("Add tax",[{id:"n",l:"Name"},{id:"r",l:"Rate (%)",t:"number"}],o=>{if(user().role!="admin")return"Admins only.";if(!o.n||!(o.r>=0))return"Add a name and rate.";S.taxes.push({id:uid("tax"),name:o.n,rate:o.r});save()});
+A.addDisc=()=>form("Add discount",[{id:"n",l:"Name"},{id:"k",l:"Type",t:"select",o:[["percent","Percentage"],["fixed","Fixed amount"]]},{id:"v",l:"Value",t:"number"},{id:"a",l:"Minimum purchase amount",t:"number",v:0},{id:"q",l:"Minimum quantity",t:"number",v:1},{id:"f",l:"Starts",t:"date",v:today()},{id:"t",l:"Ends",t:"date",v:addD(today(),90)},{id:"l",l:"Can be used (times)",t:"number",v:100},{id:"p",l:"Product ids (blank = whole subscription)",ph:"1,2"}],o=>{
+  if(user().role!="admin")return"Admins only.";if(!o.n||!(o.v>0))return"Add a name and a value.";if(o.k=="percent"&&o.v>100)return"A percentage can’t exceed 100.";
+  const pids=o.p.split(",").map(Number).filter(Boolean);S.discounts.push({id:uid("disc"),name:o.n,kind:o.k,value:o.v,minAmt:o.a,minQty:o.q,from:o.f,to:o.t,limit:o.l,used:0,scope:pids.length?"products":"all",pids});save();
+});
+A.addTpl=()=>form("Add quotation template",[{id:"n",l:"Name"},{id:"p",l:"Plan",t:"select",o:planOpts()},{id:"d",l:"Valid for (days)",t:"number",v:15},{id:"i",l:"Product",t:"select",o:combos()},{id:"q",l:"Quantity",t:"number",v:1}],o=>{
+  if(user().role!="admin")return"Admins only.";if(!o.n)return"Add a name.";const[pid,vi]=o.i.split(":").map(Number);
+  S.templates.push({id:uid("tpl"),name:o.n,planId:Number(o.p),days:o.d,lines:[{pid,vi,qty:o.q}]});save();
+});
+A.addStaff=()=>form("Add staff member",[{id:"n",l:"Name"},{id:"e",l:"Email",t:"email"},{id:"p",l:"Temporary password",t:"password"}],o=>{
+  if(user().role!="admin")return"Only admins can add staff.";
+  const e=o.e.trim().toLowerCase();if(!o.n||!/^\S+@\S+\.\S+$/.test(e))return"Add a name and a valid email.";
+  const pe=pwErr(o.p);if(pe)return pe;if(S.users.some(u=>u.email==e))return"That email already has an account.";
+  hash(o.p).then(h=>{S.users.push({name:o.n,email:e,pw:h,role:"staff"});save();render()});
+});
+
+/* ---------- Resso Pay checkout (simulated gateway) ---------- */
+const luhn=n=>{let s=0,d=false;for(let i=n.length-1;i>=0;i--){let x=+n[i];if(d){x*=2;if(x>9)x-=9}s+=x;d=!d}return s%10==0};
+function rs(id,step,m,msg){
+  const i=I(id),head='<div class="rp"><div class="rph"><b>Resso Pay</b> <small>Secure checkout</small><div class="amt">'+money(bal(i))+"</div><small>"+esc(i.no)+" · Brightloop Software</small></div>";
+  let b="";
+  if(step=="pick"){
+    b='<div class="tabs">'+[["card","Card"],["upi","UPI"],["bank","Net banking"]].map(x=>'<button class="'+(m==x[0]?"on":"")+'" onclick="rs('+id+",'pick','"+x[0]+"')\">"+x[1]+"</button>").join("")+"</div>"
+    +(m=="card"?'<label>Card number<input id="cn" inputmode="numeric" placeholder="4242 4242 4242 4242" autocomplete="cc-number"></label><div class="row"><label>Expiry<input id="ce" placeholder="MM/YY" autocomplete="cc-exp"></label><label>CVV<input id="cc" type="password" maxlength="3" inputmode="numeric" autocomplete="cc-csc"></label></div><small style="color:var(--mut)">Test cards: 4242 4242 4242 4242 works, 4000 0000 0000 0002 is declined. OTP is 123456.</small>'
+    :m=="upi"?'<label>UPI ID<input id="up" placeholder="name@bank"></label>'
+    :'<label>Choose your bank<select id="bk"><option>Canara Bank</option><option>Federal Bank</option><option>HDFC Bank</option><option>State Bank of India</option></select></label>')
+    +'<div class="err">'+esc(msg||"")+'</div><button style="width:100%;margin-top:6px" onclick="rsGo('+id+",'"+m+"')\">Pay "+money(bal(i))+"</button>";
+  }else if(step=="wait")b='<div class="spin" role="status" aria-label="Processing payment"></div><p style="text-align:center">'+esc(msg||"Processing your payment…")+"</p>";
+  else if(step=="otp")b='<p>Enter the 6-digit code sent to your phone.</p><label>One-time code<input id="otp" inputmode="numeric" maxlength="6"></label><div class="err">'+esc(msg||"")+'</div><button style="width:100%" onclick="rsOtp('+id+",'"+m+"')\">Verify and pay</button>";
+  else b='<div class="ok"><i>✓</i><h2>Payment received</h2><p>'+esc(msg)+'</p><button onclick="close();render()">Done</button></div>';
+  modal(head+b+"</div>");
+}
+function rsGo(id,m){
+  if(m=="card"){
+    const n=v("cn").replace(/\s/g,""),e=v("ce"),c=v("cc");
+    if(!/^\d{16}$/.test(n)||!luhn(n))return rs(id,"pick",m,"That card number doesn’t look right.");
+    const mm=e.match(/^(\d\d)\/(\d\d)$/);if(!mm||+mm[1]<1||+mm[1]>12||new Date(2000+ +mm[2],+mm[1])<new Date())return rs(id,"pick",m,"Check the expiry date.");
+    if(!/^\d{3}$/.test(c))return rs(id,"pick",m,"CVV is 3 digits.");
+    if(n=="4000000000000002"){rs(id,"wait",m);return setTimeout(()=>rs(id,"pick",m,"Your bank declined this card. Try another."),1200)}
+  }
+  if(m=="upi"&&!/^[\w.\-]{2,}@\w{2,}$/.test(v("up")))return rs(id,"pick",m,"Enter a UPI ID like name@bank.");
+  rs(id,"wait",m,m=="upi"?"Approve the request in your UPI app…":"Contacting your bank…");
+  setTimeout(()=>m=="upi"?rsDone(id,m):rs(id,"otp",m),1300);
+}
+function rsOtp(id,m){if(v("otp")!="123456")return rs(id,"otp",m,"That code isn’t right. Try 123456.");rs(id,"wait",m);setTimeout(()=>rsDone(id,m),900)}
+function rsDone(id,m){
+  const i=I(id),ref="RP"+Date.now().toString(36).toUpperCase(),a=bal(i);
+  recordPay(id,"Resso Pay ("+(m=="bank"?"net banking":m)+")",a,"",ref);
+  rs(id,"ok",m,money(a)+" paid for "+i.no+". Reference "+ref+".");
+}
+init();
+</script>
+</body>
+</html>
