@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Brightloop: subscription billing that runs itself</title>
+<meta name="description" content="Plans, renewals, invoices, payments and revenue reports for subscription businesses.">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#1c2b2d;--mut:#5f7174;--paper:#f4f7f6;--card:#fff;--pine:#12514a;--mint:#d9ece6;--sun:#f0a63a;--berry:#c8452f;--line:#dfe7e5;color-scheme:light}
+@media(prefers-color-scheme:dark){:root{--ink:#e8f0ee;--mut:#9fb2b0;--paper:#0f1a1b;--card:#16262a;--pine:#5cc2b0;--mint:#1d3a38;--berry:#ef7a65;--line:#25393b;color-scheme:dark}}
+*{box-sizing:border-box}html{scroll-behavior:smooth}
+body{margin:0;background:var(--paper);color:var(--ink);font:17px/1.6 "Bricolage Grotesque",system-ui,sans-serif}
+a{color:inherit}h1,h2,h3{line-height:1.15;margin:0 0 .5em}
+h1{font-size:clamp(2.3rem,6vw,4rem);font-weight:800;max-width:15ch}h2{font-size:clamp(1.6rem,3.5vw,2.3rem);font-weight:800}h3{font-size:1.15rem}
+p{margin:0 0 1em;max-width:62ch}
+.wrap{max-width:1080px;margin:0 auto;padding:0 20px}
+section{padding:64px 0}
+header{position:sticky;top:0;background:color-mix(in srgb,var(--paper) 90%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);z-index:5}
+header .wrap{display:flex;align-items:center;justify-content:space-between;gap:12px;height:62px}
+.logo{font-weight:800;font-size:1.25rem;display:flex;align-items:center;gap:8px;text-decoration:none}
+.logo i{width:20px;height:20px;border-radius:50% 50% 50% 4px;background:var(--sun)}
+nav{display:flex;gap:20px;align-items:center}nav a{text-decoration:none;color:var(--mut)}nav a:hover{color:var(--ink)}
+.btn{display:inline-block;background:var(--pine);color:var(--paper);padding:.7em 1.3em;border-radius:12px;font-weight:600;text-decoration:none;border:0;cursor:pointer;font:inherit;font-weight:600}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--sun);outline-offset:2px}
+.hero{background:var(--pine);color:#fff;padding:72px 0 0;overflow:hidden}
+.hero p{color:var(--mint);font-size:1.2rem}
+.hero .btn{background:var(--sun);color:#1c2b2d}.hero .btn.ghost{background:transparent;color:#fff;border-color:rgba(255,255,255,.4)}
+.cta{display:flex;gap:12px;flex-wrap:wrap;margin:8px 0 40px}
+.month{background:var(--card);color:var(--ink);border-radius:20px 20px 0 0;padding:20px 22px;display:grid;grid-template-columns:repeat(auto-fill,minmax(54px,1fr));gap:6px}
+.month h3{grid-column:1/-1;margin:0 0 4px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.month h3 span{font-weight:400;color:var(--mut);font-size:.95rem}
+.d{aspect-ratio:1;border-radius:10px;background:var(--paper);display:grid;place-items:center;font-size:.85rem;position:relative;color:var(--mut)}
+.d.e{background:var(--mint);color:var(--pine);font-weight:700}.d.s{background:var(--sun);color:#1c2b2d;font-weight:700}.d.r{background:#f6d4cc;color:var(--berry);font-weight:700}
+.legend{grid-column:1/-1;display:flex;gap:16px;flex-wrap:wrap;font-size:.85rem;color:var(--mut);margin-top:6px}
+.legend b{display:inline-block;width:12px;height:12px;border-radius:4px;margin-right:6px;vertical-align:-1px}
+.story{display:grid;grid-template-columns:1fr 1fr;gap:28px 48px;align-items:start}
+.story article{border-top:2px solid var(--line);padding-top:14px}
+.story p{color:var(--mut);margin:0}
+.calc{display:grid;grid-template-columns:1fr 1fr;gap:28px;background:var(--card);border:1px solid var(--line);border-radius:22px;padding:28px}
+label{display:block;margin:0 0 14px;font-size:.92rem;color:var(--mut)}
+input,select{width:100%;padding:.6em .8em;border:1px solid var(--line);border-radius:10px;background:var(--paper);font:inherit;color:var(--ink)}
+.seg{display:flex;border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-bottom:14px}
+.seg button{flex:1;padding:.6em;border:0;background:transparent;font:inherit;color:var(--mut);cursor:pointer}.seg button.on{background:var(--mint);color:var(--pine);font-weight:700}
+.bill{background:var(--paper);border-radius:16px;padding:20px}
+.bill div{display:flex;justify-content:space-between;gap:12px;padding:5px 0}
+.bill .tot{border-top:2px solid var(--ink);margin-top:8px;padding-top:12px;font-size:1.5rem;font-weight:800}
+.bill small{color:var(--mut)}.save{color:var(--pine);font-weight:600}
+.roles{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.roles article{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:22px}
+.roles article:nth-child(1){background:var(--pine);color:var(--paper);border:0}
+.roles ul{margin:0;padding-left:1.1em}.roles li{margin:.3em 0}
+.sec{display:grid;grid-template-columns:repeat(2,1fr);gap:10px 40px}
+.sec div{padding:10px 0;border-bottom:1px solid var(--line)}
+details{border-bottom:1px solid var(--line);padding:14px 0}summary{cursor:pointer;font-weight:600}details p{margin:.6em 0 0;color:var(--mut)}
+footer{background:var(--pine);color:var(--mint);padding:48px 0;text-align:center}footer h2{color:#fff;margin-inline:auto}footer p{margin-inline:auto}
+@media(max-width:760px){.story,.calc,.roles,.sec{grid-template-columns:1fr}nav a:not(.btn){display:none}}
+</style>
+</head>
+<body>
+<header><div class="wrap"><a class="logo" href="#top"><i></i>Brightloop</a><nav><a href="#month">A billing month</a><a href="#pricing">Pricing</a><a href="#who">Who uses it</a><a href="#security">Security</a><a class="btn" href="app.html">Open the app</a></nav></div></header>
+
+<main id="top">
+<div class="hero"><div class="wrap">
+<h1>Billing that runs itself, so your month doesn’t.</h1>
+<p>Brightloop keeps plans, renewals, invoices, payments and revenue numbers in one place. No spreadsheets, no hand-typed invoices, no hunting through bank statements.</p>
+<div class="cta"><a class="btn" href="app.html">Try the live demo</a><a class="btn ghost" href="#month">See a billing month</a></div>
+<div class="month" id="cal" aria-label="A sample billing month"></div>
+</div></div>
+
+<section id="month"><div class="wrap">
+<h2>One ordinary billing month</h2>
+<p>Every scene below is something that happens at a subscription company. Here is what Brightloop does for each one.</p>
+<div class="story">
+<article><h3>A new customer signs up</h3><p>One account per email. Passwords need more than eight characters with upper case, lower case and a special character. A reset link goes to the registered email.</p></article>
+<article><h3>A new plan launches</h3><p>The admin adds a product with sales price, cost and variants (choosing the Odoo brand adds ₹560), then a plan that bills daily, weekly, monthly or yearly with a minimum quantity and availability dates.</p></article>
+<article><h3>A quote becomes a subscription</h3><p>Reps start from a quotation template with the plan and lines already in, valid for a set number of days. Every subscription has a number and moves from Draft to Quotation to Confirmed to Active to Closed.</p></article>
+<article><h3>Billing day</h3><p>One click creates every due invoice with customer, lines, tax and totals filled in. Each billing period has a unique key, so nothing is billed twice or skipped.</p></article>
+<article><h3>A customer asks for a better price</h3><p>Admins set fixed or percentage discounts with minimum spend or seats, dates and a usage limit. The best match lands on the next invoice by itself and stops when it expires or runs out.</p></article>
+<article><h3>The money comes in</h3><p>Customers pay through the Resso Pay checkout, and staff can record cash, cheque or bank transfers with a note. Each payment lands on its invoice, and paid or outstanding is always visible.</p></article>
+<article><h3>Month end, in one screen</h3><p>Active subscriptions, monthly recurring revenue, money collected, money still owed and overdue invoices, with date filters. Answers that took days now take seconds.</p></article>
+<article><h3>Customers manage themselves</h3><p>A portal shows each customer only their own subscriptions and invoices. They can accept a quote, pause or close a plan when allowed, and pay without emailing anyone.</p></article>
+</div></div></section>
+
+<section id="pricing" style="background:var(--mint)"><div class="wrap">
+<h2>Work out your price</h2>
+<p>This uses Brightloop’s own sample catalog, the same one in the demo app.</p>
+<div class="calc">
+<div>
+<div class="seg" role="group" aria-label="Billing period"><button id="pm" class="on" onclick="setP('m')">Monthly</button><button id="py" onclick="setP('y')">Yearly</button></div>
+<label>Seats<input id="seats" type="number" min="1" value="3" oninput="calc()"></label>
+<label>Brand<select id="brand" onchange="calc()"><option value="0">Standard</option><option value="560">Odoo (+₹560 per seat)</option></select></label>
+<label><input id="sup" type="checkbox" style="width:auto;margin-right:8px" onchange="calc()">Add priority support (₹300 per seat)</label>
+<small id="note" style="color:var(--mut)"></small>
+</div>
+<div class="bill" aria-live="polite" id="bill"></div>
+</div></div></section>
+
+<section id="who"><div class="wrap">
+<h2>Three kinds of people, three views</h2>
+<div class="roles">
+<article><h3>Admin</h3><ul><li>Products, variants and plans</li><li>Taxes and discount rules</li><li>Quotation templates</li><li>Adds staff members</li></ul></article>
+<article><h3>Staff</h3><ul><li>Create and move subscriptions</li><li>Run billing, confirm, send and print invoices</li><li>Record payments and chase overdue ones</li><li>No access to settings</li></ul></article>
+<article><h3>Customer</h3><ul><li>Only their own subscriptions and invoices</li><li>Accept quotes, pause or close where allowed</li><li>Pay online, print receipts</li></ul></article>
+</div></div></section>
+
+<section id="security" style="background:var(--card)"><div class="wrap">
+<h2>Built carefully with money in mind</h2>
+<div class="sec">
+<div><b>Strong passwords.</b> Length and character rules, hashed storage.</div>
+<div><b>Safe resets.</b> Single-use token that expires in 15 minutes.</div>
+<div><b>Roles on every action.</b> Not just hidden buttons.</div>
+<div><b>Own data only.</b> Customers can’t see anyone else’s records.</div>
+<div><b>No double billing.</b> Unique key for each subscription and period.</div>
+<div><b>Escaped input.</b> Protects against script injection.</div>
+</div>
+<p style="margin-top:18px">The full list, known limits and a production checklist are in <a href="https://github.com/" id="gh">SECURITY.md</a> in the repository.</p>
+</div></section>
+
+<section><div class="wrap">
+<h2>Questions people ask</h2>
+<details><summary>Can I try it without signing up?</summary><p>Yes. The demo app has ready-made admin, staff and customer logins, listed in the README.</p></details>
+<details><summary>Is Resso Pay a real payment gateway?</summary><p>It is a realistic simulation for the demo: card, UPI and net banking, with an OTP step. No money moves. A live gateway would plug into the same place.</p></details>
+<details><summary>How do discounts get applied?</summary><p>When an invoice is created, Brightloop checks every active discount. If one applies, the best one is added automatically and its use count goes up.</p></details>
+<details><summary>Where is my data kept?</summary><p>In this demo, in your own browser. A production version stores it in a database behind a secure server.</p></details>
+<details><summary>Will it stay fast with thousands of subscriptions?</summary><p>The design uses indexed lookups, filtered lists and pagination so pages stay under two seconds.</p></details>
+</div></section>
+</main>
+
+<footer><div class="wrap"><h2>See your whole billing month in one place.</h2><p>Open the demo and run billing in a minute.</p><a class="btn" style="background:var(--sun);color:#1c2b2d" href="app.html">Open the app</a></div></footer>
+
+<script>
+const money=n=>"₹"+Number(n).toLocaleString("en-IN",{minimumFractionDigits:2,maximumFractionDigits:2});
+// calendar: a sample billing month
+(function(){
+  const ev={1:["s","Subscriptions go live"],5:["e","Renewal"],12:["e","Renewal"],15:["s","Billing run"],18:["e","Payment"],22:["e","Payment"],25:["r","Overdue"],28:["e","Payment"],30:["s","Month-end report"]};
+  let h='<h3>A sample billing month <span>Invoices created, payments matched, overdue ones flagged</span></h3>';
+  for(let i=1;i<=30;i++){const e=ev[i];h+='<div class="d '+(e?e[0]:"")+'"'+(e?' title="'+e[1]+'"':"")+'>'+i+"</div>"}
+  h+='<div class="legend"><span><b style="background:var(--sun)"></b>Billing events</span><span><b style="background:var(--mint)"></b>Renewals and payments</span><span><b style="background:#f6d4cc"></b>Overdue, flagged for follow-up</span></div>';
+  document.getElementById("cal").innerHTML=h;
+})();
+let per="m";
+function setP(p){per=p;document.getElementById("pm").className=p=="m"?"on":"";document.getElementById("py").className=p=="y"?"on":"";calc()}
+function calc(){
+  const seatsIn=document.getElementById("seats"),min=per=="y"?5:1;
+  let seats=Math.max(1,Math.floor(Number(seatsIn.value))||1);
+  const note=document.getElementById("note");
+  note.textContent=per=="y"?"The yearly plan needs at least 5 seats.":"";
+  if(per=="y"&&seats<5){seats=5}
+  const plan=per=="y"?9999:499,seat=1200+Number(document.getElementById("brand").value),sup=document.getElementById("sup").checked?300:0;
+  const items=[["Plan fee ("+(per=="y"?"yearly":"monthly")+")",plan],[seats+" × seat",seats*seat]];
+  if(sup)items.push([seats+" × priority support",seats*sup]);
+  const sub=items.reduce((a,x)=>a+x[1],0),disc=seats>=5?sub*.10:0,tax=(sub-disc)*.18,tot=sub-disc+tax;
+  document.getElementById("bill").innerHTML=items.map(x=>"<div><span>"+x[0]+"</span><span>"+money(x[1])+"</span></div>").join("")
+   +(disc?'<div class="save"><span>Seat saver, 10% off (5+ seats)</span><span>−'+money(disc)+"</span></div>":'<div><small>Take 5 or more seats to get 10% off automatically.</small></div>')
+   +"<div><span>GST 18%</span><span>"+money(tax)+'</span></div><div class="tot"><span>Per '+(per=="y"?"year":"month")+"</span><span>"+money(tot)+"</span></div>";
+}
+calc();
+</script>
+</body>
+</html>
